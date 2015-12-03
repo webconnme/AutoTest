@@ -31,7 +31,7 @@
   { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "doc"   , "value" : "파일 시스템 부팅 검사" }},
   { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "check" , "value" : "Welcome to WebConn!!!" }},
   { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "check" , "value" : "WebConn login: "       }},
-  { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "send"  , "value" : "root\u000C"            }},
+  { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "send"  , "value" : "root\n"            }},
   { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "check" , "value" : "[root@WebConn ~]#"     }},
   { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "sleep" , "value" : "2000"                  }},
 
