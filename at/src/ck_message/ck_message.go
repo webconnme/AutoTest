@@ -209,9 +209,9 @@ func ThreadCheckMsg() {
 		if event_count == 0 {
 		    cmdIndex++ 
             ad.Println( "check time out[%s]", err )
-//	        reason := fmt.Sprintf( "do not read [%s]", err )
-//	        ar.SetResultError( reason )
-// 		    break;
+	        reason := fmt.Sprintf( "do not read [%s]", err )
+	        ar.SetResultError( reason )
+ 		    break;
 			
 		//	   // 시간 초과가 발생 했다.
 		//        count++

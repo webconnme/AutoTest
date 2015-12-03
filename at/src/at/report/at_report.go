@@ -11,6 +11,7 @@ import (
 
 import (
     "at"
+	"net"
 )
 
 const AR_ZMQ_PROXY_PULL  = "ipc:///tmp/at_report_pull"
@@ -96,9 +97,12 @@ type AtReport struct {
 	
 	rptFile        *os.File                     // 레포트 파일 
 	reporter       *log.Logger                  // 레포트
-	
+
 	AF             *at.AtFrame
-	
+
+	toWeb		   chan []byte
+	manager		   chan net.Conn
+
 	Title          string                       // 레포트 제목 
 	Total          int                          // 총 항목 수 
 	Current        int                          // 진행 항목 수 

@@ -15,6 +15,8 @@ import (
 
 import (
     "at"
+	"net"
+	"sync"
 )
 
 func NewAtReportServer( id string, af *at.AtFrame ) (*AtReport, error) {
@@ -43,8 +45,107 @@ func NewAtReportServer( id string, af *at.AtFrame ) (*AtReport, error) {
 	ar.rptFile = nil
 	
 	ar.ResetServer()
-	
+	ar.toWeb = make(chan []byte)
+	ar.manager = make(chan net.Conn)
+	go ar.RunForWeb()
+
 	return ar, nil
+}
+
+func (ar *AtReport) RunForWeb() {
+	l, err := net.Listen("tcp", ":2999")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer l.Close()
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go ar.manage(&wg)
+	wg.Wait()
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			ar.Println("err on accept(): %s", err.Error())
+			continue
+		}
+
+		ar.manager <- conn
+	}
+}
+
+func (ar *AtReport) manage(wg *sync.WaitGroup) {
+	wg.Done()
+
+	clients := make([]chan []byte, 0)
+	closing := make(chan chan []byte)
+
+	for {
+		select {
+		case conn := <- ar.manager:
+			c := make(chan []byte, 1)
+			go ar.cast(conn, c, closing)
+			clients = append(clients, c)
+		case bytes := <- ar.toWeb:
+			for _, ch := range clients {
+				select {
+				case buf := <- ch:
+					buf = append(buf, bytes...)
+					ch <- buf
+				default:
+					ch <- bytes
+				}
+			}
+		case ch := <- closing:
+			for i, v := range clients {
+				if v == ch {
+					temp := clients[:i]
+					temp = append(temp, clients[i+1:]...)
+					clients = temp
+					closing <- nil
+					break
+				}
+			}
+		}
+	}
+}
+//
+//func (ar *AtReport) buffer(conn net.Conn, ch chan []byte, toManager chan chan []byte) {
+//	toCaster := make(chan []byte)
+//	closing := make(chan bool)
+//	buf := make([]byte, 0)
+//
+//	go ar.cast(conn, toCaster, closing)
+//
+//	for {
+//		select {
+//		case bytes := <-ch:
+//			buf = append(buf, bytes...)
+//		case <-closing:
+//			toManager <- ch
+//			<-toManager
+//			conn.Close()
+//			return
+//		case toCaster <- buf:
+//			buf = nil
+//		}
+//	}
+//}
+
+func (ar *AtReport) cast(conn net.Conn, ch chan []byte, toBuffer chan chan []byte) {
+	for {
+		select {
+		case bytes := <- ch:
+			_, err := conn.Write(bytes)
+			if err != nil {
+				toBuffer <- ch
+				<-toBuffer
+				conn.Close()
+				return
+			}
+		}
+	}
 }
 
 func (ar *AtReport) CloseServer() {
@@ -114,7 +215,9 @@ func (ar *AtReport) ResetServer()( error ) {
 
 func (ar *AtReport) Record( cmd string , content string )( error ) {
 
-	ar.reporter.Printf( "[%03d][%05d][%-8s] : %s" , ar.Deep, ar.Current, cmd, content )	
+	ar.reporter.Printf( "[%03d][%05d][%-8s] : %s" , ar.Deep, ar.Current, cmd, content )
+	str := fmt.Sprintf("[%03d][%05d][%-8s] : %s\n\r" , ar.Deep, ar.Current, cmd, content)
+	ar.toWeb <- []byte(str)
 	return nil
 }
 
