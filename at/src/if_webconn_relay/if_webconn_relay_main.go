@@ -143,6 +143,9 @@ func CallbackReset( af *at.AtFrame )(bool){
 	ad.Println( "callback reset" )
 
 
+	m := Message{ "power", "off" }
+	str, _ := json.Marshal([]Message{m})
+	PairSocket.Send(str, zmq.NOBLOCK)
 
 	return false
 }

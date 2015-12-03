@@ -144,14 +144,7 @@ func ThreadCheckMsg() {
 		switch curCommand.Cmd {
 
 		case "power"      : ad.Println( "power command [%s]", curCommand.Value )
-			m := Message{ "power", "on" }
-			str, _ := json.Marshal([]Message{m})
-			PairSocket.Send(str, zmq.NOBLOCK)
-			cmdIndex++
-			continue
-
-		case "reset"     : ad.Println( "reset command [%s]", curCommand.Value )
-			m := Message{ "power", "off" }
+			m := Message{ "power", curCommand.Value }
 			str, _ := json.Marshal([]Message{m})
 			PairSocket.Send(str, zmq.NOBLOCK)
 			cmdIndex++
