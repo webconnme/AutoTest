@@ -87,6 +87,7 @@ func zmqReceiver(s *zmq.Socket, c chan []map[string]interface{}, wg *sync.WaitGr
 
 	for {
 		buf, err := s.Recv(0)
+		log.Println(string(buf))
 		if err != nil {
 			log.Println("zmq.Socket.Recv():", err)
 			continue
@@ -186,7 +187,7 @@ func check(array []map[string]interface{}) bool {
 		}
 
 		switch cmd {
-		case "relay":
+		case "power":
 			return true
 		default:
 			return false
