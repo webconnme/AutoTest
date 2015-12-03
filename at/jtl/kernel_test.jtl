@@ -40,14 +40,14 @@
   { "cmd" : "set"   , "id" : "릴레이 인터페이스 1"      , "data" : { "cmd" : "sleep"   , "value" : "30000"         }},
   { "cmd" : "set"   , "id" : "릴레이 인터페이스 1"      , "data" : { "cmd" : "power"   , "value" : "off"           }},
 
-  { "cmd" : "sleep" , "time" : "1000" },
+  { "cmd" : "sleep" , "time" : "5000" },
 
   { "cmd" : "start" , "id" : "릴레이 인터페이스 1"  },
   { "cmd" : "start" , "id" : "시리얼 인터페이스 1"  },
   { "cmd" : "start" , "id" : "메시지 체크 1"        },
 
   { "cmd" : "check" , "time" : "30000"  },
-  
+
   { "cmd" : "stop"  , "id" : "메시지 체크 1"        },
   { "cmd" : "stop"  , "id" : "시리얼 인터페이스 1"  },
   { "cmd" : "stop"  , "id" : "릴레이 인터페이스 1"  },
