@@ -1,0 +1,2 @@
+#!/bin/sh
+docker run -it --rm --volume $(pwd):/work -v /nfs:/nfs webconn/at-dev $@

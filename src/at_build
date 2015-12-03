@@ -1,0 +1,52 @@
+#!/bin/bash
+
+echo "AT Build ..."
+
+export GOPATH=/work
+echo "GOPATH=$GOPATH" 
+
+cd $GOPATH/src/at
+go install
+
+cd $GOPATH/src/at/debug
+go install
+
+cd $GOPATH/src/at/report
+go install
+
+cd $GOPATH/src/at/jeus
+go install
+
+# cd $GOPATH/src/at_zmq_proxy
+# go install
+
+cd $GOPATH/src/at_debug
+go install
+
+cd $GOPATH/src/at_report
+go install
+
+cd $GOPATH/src/at_jeus
+go install
+
+cd $GOPATH/src/at_jmc
+go install
+
+cd $GOPATH/src/if_rs232
+go install
+
+cd $GOPATH/src/ck_message
+go install
+
+# cp $GOPATH/bin/at_zmq_proxy /work/bin/webconn_auto_test
+# cp $GOPATH/bin/at_debug /work/bin/webconn_auto_test
+cp $GOPATH/bin/at_report /work/bin/webconn_auto_test
+cp $GOPATH/bin/at_jeus /work/bin/webconn_auto_test
+
+cp $GOPATH/bin/at_jmc /work/bin/webconn_auto_test
+
+cp $GOPATH/bin/if_rs232 /work/bin/webconn_auto_test
+cp $GOPATH/bin/ck_message /work/bin/webconn_auto_test
+
+cd $GOPATH/src/
+
