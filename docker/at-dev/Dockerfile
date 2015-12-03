@@ -63,6 +63,7 @@ RUN \
     mkdir /vendor && \
     cd /vendor && \
     go get -tags zmq_4_x github.com/alecthomas/gozmq && \
+    go get github.com/codeskyblue/go-sh && \
     go get github.com/satori/go.uuid && \
     go get github.com/go-martini/martini && \
     go get github.com/martini-contrib/binding && \
