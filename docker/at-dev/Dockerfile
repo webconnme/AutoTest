@@ -29,25 +29,39 @@ RUN curl https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz | tar 
 ENV GOROOT /usr/local/go
 
 ENV PATH $PATH:$GOROOT/bin/
-ENV GOPATH=/work
 
 ENV CGO_ENABLED 1
 
 ###########################################
-# zmq 4.1.2 준비 ( 생략 )
+# libsodium 0.7.1 설치
+###########################################
+WORKDIR /
+RUN \
+    curl https://download.libsodium.org/libsodium/releases/old/libsodium-0.7.1.tar.gz | tar zx && \
+    cd /libsodium-0.7.1 && \
+    ./configure --prefix=/usr && \
+    make install && \
+    ldconfig
+
+###########################################
+# zmq 4.1.2 준비
 ###########################################
 # http://download.zeromq.org/zeromq-4.1.2.tar.gz
 WORKDIR /
-RUN curl http://download.zeromq.org/zeromq-4.1.2.tar.gz | tar zx
-WORKDIR /zeromq-4.1.2
-RUN ./configure --prefix=/usr --with-libsodium=no && make install
+RUN \
+    curl http://download.zeromq.org/zeromq-4.1.2.tar.gz | tar zx && \
+    cd /zeromq-4.1.2 && \
+    ./configure --prefix=/usr && \
+    make install
 
 
 ###########################################
 # go package 설치
 ###########################################
+ENV GOPATH /vendor
 RUN \
-    cd /usr/local/go && \
+    mkdir /vendor && \
+    cd /vendor && \
     go get -tags zmq_4_x github.com/alecthomas/gozmq && \
     go get github.com/satori/go.uuid && \
     go get github.com/go-martini/martini && \
@@ -56,6 +70,7 @@ RUN \
     go get github.com/martini-contrib/cors && \
     go get github.com/mikepb/go-serial
 
+ENV GOPATH /vendor:/work
 CMD ["/bin/bash"]
 
 WORKDIR /work
