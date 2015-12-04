@@ -1,0 +1,56 @@
+{
+"title"    : "예제 JTL",
+"descript" : "JTL 예제를 보여 주기 위한 설명",
+"task"     : 
+[
+  { "cmd" : "doc"   , "txt" : "시험 스크립트 시작"                                                              },
+  { "cmd" : "doc"   , "txt" : "===============================================================================" },
+
+  { "cmd" : "sub"   , "txt" : "커널 부팅 메세지 시험" },
+  { "cmd" : "doc"   , "txt" : "-------------------------------------------------------------------------------" },  
+  
+  { "cmd" : "run"   , "id" : "시리얼 인터페이스 1", "path" : "./if_rs232",   "data" : {  "dev" : "/dev/ttyUSB0" } },
+  { "cmd" : "run"   , "id" : "메시지 체크 1"      , "path" : "./ck_message"                                       },  
+
+  { "cmd" : "link"  , "id" : "시리얼 인터페이스 1", "channel" : "channel1", "port" : "RX DATA"  },
+  { "cmd" : "link"  , "id" : "메시지 체크 1"      , "channel" : "channel1", "port" : "IN ASCII" },
+  { "cmd" : "link"  , "id" : "메시지 체크 1"      , "channel" : "channel2", "port" : "OUT ASCII" },
+  { "cmd" : "link"  , "id" : "시리얼 인터페이스 1", "channel" : "channel2", "port" : "TX DATA"  },
+  
+  { "cmd" : "reset" , "id" : "시리얼 인터페이스 1"  },
+  { "cmd" : "set"   , "id" : "시리얼 인터페이스 1", "data" : { "baud" : "115200", "parity" : "none", "stop" : "1", "data" : "8" ,"flow" : "none" } },
+
+  { "cmd" : "reset" , "id" : "메시지 체크 1"        },
+  { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "doc"   , "value" : "유 부트 부팅 검사"     }},
+  { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "time"  , "value" : "5000"                 }},
+  { "cmd" : "set"   , "id" : "메시지 체크 1"      , "data" : { "cmd" : "check" , "value" : "U-Boot"                 }},
+
+  { "cmd" : "sleep" , "time" : "1000" },
+
+  { "cmd" : "start" , "id" : "시리얼 인터페이스 1"  },
+  { "cmd" : "start" , "id" : "메시지 체크 1"        },
+
+  { "cmd" : "check" , "time" : "10000"  },
+
+  { "cmd" : "stop"  , "id" : "메시지 체크 1"        },
+  { "cmd" : "stop"  , "id" : "시리얼 인터페이스 1"  },
+
+  { "cmd" : "unlink", "id" : "시리얼 인터페이스 1", "channel" : "channel2", "port" : "TX DATA"   },
+  { "cmd" : "unlink", "id" : "메시지 체크 1"      , "channel" : "channel2", "port" : "OUT ASCII" },
+  { "cmd" : "unlink", "id" : "메시지 체크 1"      , "channel" : "channel1", "port" : "IN ASCII"  },
+  { "cmd" : "unlink", "id" : "시리얼 인터페이스 1", "channel" : "channel1", "port" : "RX DATA"   },
+  
+  { "cmd" : "doc"   , "txt" : "-------------------------------------------------------------------------------" },
+  { "cmd" : "doc"   , "txt" : "시험 스크립트 종료"                                                              },
+  { "cmd" : "doc"   , "txt" : "-------------------------------------------------------------------------------" },
+
+  { "cmd" : "kill"  , "id" : "메시지 체크 1"        },
+  { "cmd" : "kill"  , "id" : "시리얼 인터페이스 1"  },
+  
+  { "cmd" : "subend" },  
+  
+  { "cmd" : "end" }
+  
+]  
+}
+
