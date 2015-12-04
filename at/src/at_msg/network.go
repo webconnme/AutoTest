@@ -1,25 +1,122 @@
 package main
 
 import (
-	zmq "github.com/alecthomas/gozmq"
 	"time"
 	"encoding/json"
 )
 
-const AF_ZMQ_MSG_PULL = "ipc:///tmp/at_msg_pull"
-const AF_ZMQ_MSG_REQ = "ipc:///tmp/at_msg_req"
+import (
+	zmq "github.com/webconnme/zmq4"
+	uuid "github.com/satori/go.uuid"
+	"log"
+)
 
+const AF_ZMQ_MSG_ADD = "ipc:///tmp/at_msg_add"
+const AF_ZMQ_MSG = "ipc:///tmp/at_msg"
 
-type NetworkOnQuery    func( network *Network, msg Message)
-type NetworkOnAdd    func( network *Network, msg Message)
 
 type Network struct {
 	context *zmq.Context
 	pull_socket *zmq.Socket
 	req_socket *zmq.Socket
+	dealer *zmq.Socket
+	router *zmq.Socket
+}
 
-	OnQuery NetworkOnQuery
-	OnAdd NetworkOnAdd
+var messageMap map[string]MessageStage
+var timeoutMap map[string]int
+
+func tickerHandler(data interface{}) error {
+	for k, _ := range timeoutMap {
+		timeoutMap[k]++
+	}
+	return nil
+}
+
+func resetTimeout(testId string) {
+	if _, o := timeoutMap[testId]; o {
+		timeoutMap[testId] = 0
+	}
+
+}
+
+func requestHandler(sock *zmq.Socket, st zmq.State) error {
+	buf, err := sock.RecvBytes(0)
+	if err != nil {
+		return err
+	}
+
+	var req Request
+	var msg Message
+	err = json.Unmarshal(buf, &req)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(buf, &msg)
+	if err != nil {
+		return err
+	}
+
+	switch req.Command {
+	case "new":
+		var uid uuid.UUID
+		for {
+			uid = uuid.NewV4()
+			if _, ok := messageMap[uid.String()]; !ok {
+				break
+			}
+		}
+
+		messageMap[uid.String()] = make(MessageStage)
+		timeoutMap[uid.String()] = 0
+
+	case "pop":
+		if msgMap, ok := messageMap[msg.Test]; ok {
+			resetTimeout(msg.Test)
+			m := msgMap.PopMessage(msg)
+			response, err := json.Marshal(m)
+			if err != nil {
+				return err
+			}
+
+			_, err = sock.SendBytes(response, 0)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func addHandler(sock *zmq.Socket, st zmq.State) error {
+	buf, err := sock.RecvBytes(0)
+	if err != nil {
+		return err
+	}
+
+	var msg Message
+	err = json.Unmarshal(buf, &msg)
+	if err != nil {
+		return err
+	}
+
+	if msgMap, ok := messageMap[msg.Test]; ok {
+		resetTimeout(msg.Test)
+		m := msgMap.PopMessage(msg)
+		response, err := json.Marshal(m)
+		if err != nil {
+			return err
+		}
+
+		_, err = sock.SendBytes(response, 0)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (network *Network) Run() error {
@@ -29,76 +126,48 @@ func (network *Network) Run() error {
 	if err != nil {
 		return err
 	}
-	defer network.context.Close()
+	defer network.context.Term()
 
 	network.pull_socket, err = network.context.NewSocket(zmq.PULL)
 	if err != nil {
 		return err
 	}
 	defer network.pull_socket.Close()
+	network.pull_socket.Bind(AF_ZMQ_MSG_ADD)
+
+	network.dealer, err = network.context.NewSocket(zmq.DEALER)
+	if err != nil {
+		return err
+	}
+	defer network.dealer.Close()
+	network.dealer.Bind("inproc://router")
+
+	network.router, err = network.context.NewSocket(zmq.ROUTER)
+	if err != nil {
+		return err
+	}
+	defer network.router.Close()
+	network.router.Bind(AF_ZMQ_MSG)
 
 	network.req_socket, err = network.context.NewSocket(zmq.REQ)
 	if err != nil {
 		return err
 	}
 	defer network.req_socket.Close()
+	network.req_socket.Connect("inproc://router")
 
-	poll_items := []zmq.PollItem {
-		zmq.PollItem{ Socket: network.pull_socket, Events: zmq.POLLIN},
-		zmq.PollItem{ Socket: network.req_socket, Events: zmq.POLLIN},
-	}
+	go zmq.Proxy(network.router, network.dealer, nil)
 
-	for {
-		event_count, err := zmq.Poll(poll_items, 1 * time.Second )
-		if err != nil {
-			return err
-		}
+	reactor := zmq.NewReactor()
+	reactor.AddSocket(network.pull_socket, zmq.POLLIN, addHandler)
+	reactor.AddSocket(network.req_socket, zmq.POLLIN, requestHandler)
+	reactor.AddChannelTime(time.Tick(time.Second), 10, tickerHandler)
 
-		var msg Message
+	err = reactor.Run(time.Second)
 
-		if event_count > 0 {
-			if poll_items[0].REvents & zmq.POLLIN != 0 {
-				buf, err := poll_items[0].Socket.Recv(0)
-				if err != nil {
-					// handle error
-				} else {
-					err := json.Unmarshal(buf, &msg)
-					if err != nil {
-						// handle error
-					} else {
-						if network.OnQuery != nil {
-							network.OnQuery(network, msg)
-						}
-					}
-				}
-			}
-
-			if poll_items[1].REvents & zmq.POLLIN != 0 {
-				buf, err := poll_items[1].Socket.Recv(0)
-				if err != nil {
-					// handle error
-				} else {
-					err := json.Unmarshal(buf, &msg)
-					if err != nil {
-						// handle error
-					} else {
-						if network.OnAdd != nil {
-							network.OnAdd(network, msg)
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func SendResponse(sock *zmq.Socket, msg Message) {
-	buf, err := json.Marshal(msg)
 	if err != nil {
-
-	} else {
-		sock.Send(buf, 0)
+		log.Panic(err)
 	}
+
+	return err
 }

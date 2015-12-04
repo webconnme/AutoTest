@@ -1,32 +1,42 @@
 package main
-import "fmt"
 
 type Message struct {
+	Test string `json:"test"`
 	Id string `json:"id"`
 	Target string `json:"target"`
 	Stage int `json:"stage"`
 	Data string `json:"data"`
 }
 
+type Request struct {
+	Message
+	Command string `json:"command"`
+}
+
 type MessageArray []Message
 type MessageMap map[string]MessageArray
 type MessageStage map[int]MessageMap
 
-
-var messages MessageStage
-
-func PopMessage(msg Message) *Message {
+func (messages MessageStage) GetStage(min int) int {
 	index := -1
 
 	for k, _ := range messages {
-		if index == -1 {
-			index = k
-		} else {
-			if index > k {
+		if min < k {
+			if index == -1 {
 				index = k
+			} else {
+				if index > k {
+					index = k
+				}
 			}
 		}
 	}
+
+	return index
+}
+
+func (messages MessageStage) popMessage(msg Message, minStage int) *Message {
+	index := messages.GetStage(minStage)
 
 	if index == -1 {
 		return nil
@@ -48,17 +58,21 @@ func PopMessage(msg Message) *Message {
 		delete(messages[index], msg.Target)
 	}
 
-	fmt.Println("-------------")
-	fmt.Println(messages)
-	fmt.Println("-------------")
-
 	if len(messages[index]) == 0 {
 		delete(messages, index)
 	}
 	return &result
 }
 
-func PushMessage(msg Message) {
+func (messages MessageStage) PopMessage(msg Message) *Message {
+	m := messages.popMessage(msg, -1)
+	if m != nil {
+		return m
+	}
+	return messages.popMessage(msg, 0)
+}
+
+func (messages MessageStage) PushMessage(msg Message) {
 	if messages == nil {
 		messages = make(MessageStage)
 	}
@@ -72,7 +86,4 @@ func PushMessage(msg Message) {
 	}
 
 	messages[msg.Stage][msg.Target] = append(messages[msg.Stage][msg.Target], msg)
-
-
-	fmt.Println(messages)
 }
