@@ -91,7 +91,7 @@ func main() {
 //			so.BroadcastTo("chat", "chat message", msg)
 
 			so.Emit("message",  "execute jmc start........!!!!\n")
-			sh.Command("./at_jmc", "kernel_webconn_test.jtl").Run()
+			sh.Command("../../bin/at_jmc", "relay_test.jtl").Run()
 
 	//			defer client.Close()
 

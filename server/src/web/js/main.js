@@ -8,8 +8,29 @@ var socket = io();
 
 socket.on('message', function(mesg) {
 //    console.log(mesg);
+
     $("#log-box").append(mesg);
     $("#log-box")[0].scrollTop = $("#log-box")[0].scrollHeight;
+
+    // 메세지 확인
+    // start
+    if (mesg.match("start")) {
+        console.log("start");
+//        $('.progress-bar').css('width: 100%');
+        $('.progress-bar').addClass('active');
+    }
+    // total
+    if (mesg.match("total")) {
+        console.log("total");
+    }
+    // end
+    if (mesg.match("end")) {
+        console.log("end");
+
+        $('.progress-bar').removeClass('active');
+        alert('종료 하였습니다.!!!');
+    }
+
 });
 
 $('#btn_start').click(function () {
