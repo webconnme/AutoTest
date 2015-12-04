@@ -86,6 +86,7 @@ func CallbackSet( af *at.AtFrame, data interface{} )(bool){
 	                              ar.SetTotalOnServer      ( value )
 								  
 	case atr.AR_CMD_SET_CURRENT : value,_ := strconv.Atoi( m["value"].(string) )
+		                          ad.Println("current = [%d]", value)
 	                              ar.SetCurrentOnServer    ( value )
 								  
 	case atr.AR_CMD_DUCMENT		: value,_ := m["value"].(string)
