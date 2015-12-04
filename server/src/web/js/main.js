@@ -17,7 +17,7 @@ socket.on('message', function(mesg) {
     if (mesg.match("start")) {
         console.log("start");
 //        $('.progress-bar').css('width: 100%');
-        $('.progress-bar').addClass('active');
+        $('.progress-bar').show();
     }
     // total
     if (mesg.match("total")) {
@@ -28,6 +28,7 @@ socket.on('message', function(mesg) {
         console.log("end");
 
         $('.progress-bar').removeClass('active');
+        $('.progress-bar').hide();
         alert('종료 하였습니다.!!!');
     }
 
